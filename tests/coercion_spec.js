@@ -4,6 +4,9 @@
         describe('#coercion', function () {
             var c = coercion.coercion(Number, [coercion.parseInteger(10)],
                                       constraint.constraint(isGt5, 'lt 5'));
+            it('should succeed when no coercion is necessary', function () {
+                expect(sifter.run(c, 9).s).to.equal(9);
+            });
             it('should coerce as per provided specifications', function () {
                 expect(sifter.run(c, '9').s).to.equal(9);
             });

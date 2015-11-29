@@ -28,7 +28,7 @@
     function coerce(expected, coercions, context) {
         return function (input) {
             // Coercion successful, already the correct type
-            if (input instanceof expected) {
+            if (R.is(expected, input)) {
                 return Validation.Success(input);
             } else {
                 // filter Coercable's by testing that R.is(Coercable.type, input)

@@ -20,6 +20,26 @@
         return Validation.Success;
     }
 
+    function isA(Type) {
+        return constraint(R.is(Type), 'is not of Type' + Type);
+    }
+
+    /**
+     * Given 2 constraint functions. Create a shortcircuiting constraint that
+     * only tests the second if the first succeeds. This is useful for encoding
+     * type requirements where subsequent constraints are meaningless, i.e.
+     * numerical bounds checking shouldn't be run against a string */
+    function and(first, second) {
+        return function (context) {
+            var contextFirst = first(context),
+                contextSecond = second(context);
+            return function (input) {
+                var firstResult = contextFirst(input);
+                return firstResult.fold(Validation.Failure, contextSecond);
+            };
+        };
+    }
+
     /**
     * Given many constraint functions as produced by constraint, return a
     * single constraint function that is the union of all of them.
@@ -90,6 +110,7 @@
         return function (context) {
             var contextLen = lengthConstraint(T.Context.Derived(context, T.Key.Field('length')));
             return function (input) {
+                // TODO: This can probably be implemented in terms of isA & and
                 if (!Array.isArray(input)) {
                     return Validation.Failure([T.Reason(context, 'is not an array')]);
                 }
@@ -105,13 +126,22 @@
         };
     }
 
+    var isNumber = isA(Number),
+        isString = isA(String),
+        isDate = isA(Date);
+
     module.exports = {
         constraint: constraint,
+        isA: isA,
+        and: and,
         valid: valid,
         all: all,
         field: field,
         object: object,
-        array: array
+        array: array,
+        isNumber: isNumber,
+        isString: isString,
+        isDate: isDate
     };
 
 }(

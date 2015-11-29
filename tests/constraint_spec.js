@@ -4,6 +4,14 @@
 
     function isPositive(x) { return x > 0; }
 
+    function isLt3(x) { return x < 3; }
+
+    function isGt5(x) { return x > 5; }
+
+    function isLt7(x) { return x < 7; }
+
+    var lt3 = C.constraint(isLt3, 'gt 3');
+
     describe('S', function () {
         describe('#constraint', function () {
             var c = C.constraint(isPositive, 'is negative');
@@ -15,10 +23,8 @@
             });
         });
 
-        function isLt3(x) { return x < 3; }
-        function isGt5(x) { return x > 5; }
-        function isLt7(x) { return x < 7; }
-        describe('#constraints', function () {
+
+        describe('#all', function () {
             var c = C.all([C.constraint(isGt5, 'is lt 5'),
             C.constraint(isLt7, 'is gt 7')]);
             it('should create a constraint that returns Success when all constituents return success', function () {
@@ -27,6 +33,16 @@
             it('should create a constraint that returns Failure when any constituents fail', function () {
                 expect(S.run(c, 7)).to.have.property('f');
                 expect(S.run(c, 4)).to.have.property('f');
+            });
+        });
+
+        describe('#isA', function () {
+            var c = C.isA(Number);
+            it('should return success on matching types', function () {
+                expect(S.run(c, 5).s).to.equal(5);
+            });
+            it('should return failure on non matching types', function () {
+                expect(S.run(c, '5')).to.have.property('f');
             });
         });
 
@@ -82,7 +98,6 @@
 
         describe('#array', function () {
             var c = C.array(C.valid, gt5),
-                lt3 = C.constraint(isLt3, 'gt 3'),
                 lenC = C.array(lt3, gt5);
 
             it('should succeed on all elements', function () {
@@ -101,6 +116,43 @@
                 expect(S.run(lenC, [6, 7, 8, 4])).to.have.property('f');
                 expect(S.run(lenC, [6, 7, 8, 4]).f.length).to.equal(2); // 1 failure for len, 1 for invalid item
             });
+        });
+    });
+
+    it('should allow for complex hierarchical constraints', function () {
+        var c = C.object([
+            C.field('a', C.array(C.valid, C.isNumber)),
+            C.field('b', C.isString),
+            C.field('c', C.array(lt3,
+                                 C.object([
+                                     C.field('q', C.isString)
+                                 ])))
+        ]);
+        
+        it('should succeed on valid input', function () {
+            expect(S.run(c, {
+                a: [5, 6],
+                b: 'hi',
+                c: [{q: 'world'}]
+            })).to.shallowDeepEqual({
+                a: [5, 6],
+                b: 'hi',
+                c: [{q: 'world'}]
+            });
+        });
+
+        it('should fail on invalid input', function () {
+            expect(S.run(c, {
+                a: [5, 6],
+                b: 7,
+                c: [{q: 'world'}]
+            })).to.have.property('f');
+
+            expect(S.run(c, {
+                a: [5, 6],
+                b: 7,
+                c: ['world']
+            })).to.have.property('f');
         });
     });
 }(
