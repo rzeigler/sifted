@@ -25,7 +25,7 @@ Note that if validation fails, the callback receives null for output.
 
 For more see
 * The [Constraint API](doc/constraint.md)
-* The [Coercion API](doc/constraint.md)
+* The [Coercion API](doc/coercion.md)
 * The [Types](doc/types.md)
 
 These are exported from sifted as
