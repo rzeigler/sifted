@@ -68,6 +68,5 @@
 }(
     require('fantasy-validations'),
     require('ramda'),
-    require('./types'),
-    require('./constraint')
+    require('./types')
 ));

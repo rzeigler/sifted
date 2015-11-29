@@ -127,7 +127,11 @@
     }
 
     function isIn(elems) {
-        return constraint(R.flip(R.contains)(elems), 'input is not one of ' + elems);
+        return constraint(R.flip(R.contains)(elems), 'is not one of ' + elems);
+    }
+
+    function equals(x) {
+        return constraint(R.equals(x), 'is not ' + x);
     }
 
     function isGt(x) {
@@ -159,6 +163,7 @@
         field: field,
         object: object,
         array: array,
+        equals: equals,
         isA: isA,
         isNumber: isNumber,
         isString: isString,

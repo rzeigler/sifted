@@ -172,6 +172,16 @@
         });
     });
 
+    describe('#eq', function () {
+        var c = C.equals(5);
+        it('should succeed on valid inputs', function () {
+            expect(S.run(c, 5).s).to.equal(5);
+        });
+        it('should fail on everything else', function () {
+            expect(S.run(c, 4)).to.have.property('f');
+        });
+    });
+
     it('should allow for complex hierarchical constraints', function () {
         var c = C.object([
             C.field('a', C.array(C.valid, C.isNumber)),
