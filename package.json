@@ -1,7 +1,7 @@
 {
   "name": "sifted",
   "version": "0.1.0",
-  "description": "Sift out your valid inputs... functionally.",
+  "description": "Sift out your valid inputs... functionally!",
   "main": "src/index.js",
   "repository": "git@github.com:arzig/sifted.git",
   "homepage": "https://github.com/arzig/sifted",
