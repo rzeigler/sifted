@@ -5,6 +5,10 @@ In particular, this means that creating your own constraints is super easy becau
 That said, there are some combinators to make creating your own constraints super easy. When reading this document assume that `Constraint = Context -> Input -> Validation[Array[Reason], Output]`
 Any instance of `Constraint` is suitable for passing to `sifted.run` however, some are not particularly useful on their own such as `valid` or `field`.
 
+Finally, a note on arity.
+Constraint is a manually curried function.
+Most other functions are not curried, despite what the arity notation may indicate.
+
 ## constraint
 `constraint: (Input -> Bool) -> String -> Constraint`
 
@@ -88,3 +92,28 @@ A constraint that succeeds when its input is a string.
 `isDate: Constraint`
 
 A constraint that succeeds when its input is a Date.
+
+## isIn
+`isIn: [x] -> Constraint`
+
+Create a constraint that succeeds when its input is in a given set.
+
+## isGt
+`isGt: Number -> Constraint`
+
+Create a constraint the succeeds when its input is greater than the argument.
+
+## isGte
+`isGte: Number -> Constraint`
+
+Create a constraint the succeeds when its input is greater than or equal to the argument.
+
+## isLt
+`isLt: Number -> Constraint`
+
+Create a constraint that succeeds when its input is less than the argument
+
+## isLte
+`isLte: Number -> Constraint`
+
+Create a constraint that succeeds when its input is less than or equal to the argument.

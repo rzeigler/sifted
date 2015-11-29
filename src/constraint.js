@@ -20,10 +20,6 @@
         return Validation.Success;
     }
 
-    function isA(Type) {
-        return constraint(R.is(Type), 'is not of Type' + Type);
-    }
-
     /**
      * Given 2 constraint functions. Create a shortcircuiting constraint that
      * only tests the second if the first succeeds. This is useful for encoding
@@ -126,22 +122,52 @@
         };
     }
 
+    function isA(Type) {
+        return constraint(R.is(Type), 'is not of Type' + Type);
+    }
+
+    function isIn(elems) {
+        return constraint(R.flip(R.contains)(elems), 'input is not one of ' + elems);
+    }
+
+    function isGt(x) {
+        // x should be less than the input
+        return constraint(R.lt(x), 'is not > ' + x);
+    }
+
+    function isGte(x) {
+        return constraint(R.lte(x), 'is not >= ' + x);
+    }
+
+    function isLt(x) {
+        return constraint(R.gt(x), 'is not < ' + x);
+    }
+
+    function isLte(x) {
+        return constraint(R.gte(x), 'is not <= ' + x);
+    }
+
     var isNumber = isA(Number),
         isString = isA(String),
         isDate = isA(Date);
 
     module.exports = {
         constraint: constraint,
-        isA: isA,
         and: and,
         valid: valid,
         all: all,
         field: field,
         object: object,
         array: array,
+        isA: isA,
         isNumber: isNumber,
         isString: isString,
-        isDate: isDate
+        isDate: isDate,
+        isIn: isIn,
+        isGt: isGt,
+        isGte: isGte,
+        isLt: isLt,
+        isLte: isLte
     };
 
 }(

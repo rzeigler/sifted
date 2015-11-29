@@ -119,6 +119,59 @@
         });
     });
 
+    describe('#isIn', function () {
+        var c = C.isIn([1, 2]);
+        it('should succeed on valid inputs', function () {
+            expect(S.run(c, 1).s).to.equal(1);
+            expect(S.run(c, 2).s).to.equal(2);
+        });
+        it('should fail on invalid inputs', function () {
+            expect(S.run(c, 3)).to.have.property('f');
+        });
+    });
+
+    describe('#isGt', function () {
+        var c = C.isGt(5);
+        it('should succeed on valid inputs', function() {
+            expect(S.run(c, 6).s).to.equal(6);
+        });
+        it('should fail on invalid inputs', function () {
+            expect(S.run(c, 5)).to.have.property('f');
+        });
+    });
+
+    describe('#isGte', function () {
+        var c = C.isGte(5);
+        it('should succeed on valid inputs', function() {
+            expect(S.run(c, 5).s).to.equal(5);
+            expect(S.run(c, 6).s).to.equal(6);
+        });
+        it('should fail on invalid inputs', function () {
+            expect(S.run(c, 4)).to.have.property('f');
+        });
+    });
+
+    describe('#isLt', function () {
+        var c = C.isLt(5);
+        it('should succeed on valid inputs', function() {
+            expect(S.run(c, 4).s).to.equal(4);
+        });
+        it('should fail on invalid inputs', function () {
+            expect(S.run(c, 5)).to.have.property('f');
+        });
+    });
+
+    describe('#isGte', function () {
+        var c = C.isLte(5);
+        it('should succeed on valid inputs', function() {
+            expect(S.run(c, 5).s).to.equal(5);
+            expect(S.run(c, 4).s).to.equal(4);
+        });
+        it('should fail on invalid inputs', function () {
+            expect(S.run(c, 6)).to.have.property('f');
+        });
+    });
+
     it('should allow for complex hierarchical constraints', function () {
         var c = C.object([
             C.field('a', C.array(C.valid, C.isNumber)),
@@ -128,7 +181,7 @@
                                      C.field('q', C.isString)
                                  ])))
         ]);
-        
+
         it('should succeed on valid input', function () {
             expect(S.run(c, {
                 a: [5, 6],
