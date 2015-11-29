@@ -41,16 +41,16 @@ When the combined constraint succeeds it will succeed with the value of the last
 ## field
 `field: String -> Constraint -> Options -> Constraint`
 
-[fieldid]: Create a constraint that validates a single field of an input object against the provided constraint.
+Create a constraint that validates a single field of an input object against the provided constraint.
  When this succeeds, it succeeds with either an empty object `{}` or an object with a single field field matching the input string.
-This is not terribly useful on its own but operates in conjuction with [object] [objectid] that aggregates the results.
+This is not terribly useful on its own but operates in conjuction with [object](#object) that aggregates the results.
 
 
 ## object
 `object: [Constraint] -> Constraint`
 
-[objectid]: Create an object constraint.
-There is an assumption that the input Constraints all succeed with objects themselves such as being produced by [field] [fieldid].
+Create an object constraint.
+There is an assumption that the input Constraints all succeed with objects themselves such as being produced by [field](#field).
 If this is not the case, the output of the returned constraint is undefined.
 You may further nest object constraints within an object's field to achieve hierarchies.
 
