@@ -75,7 +75,7 @@
                 } else if (opts.optional) {
                     return Validation.Success({});
                 } else {
-                    return Validation.Failure([T.Reason(subContext, 'No value present')]);
+                    return Validation.Failure([T.Reason(subContext, 'is required but missing')]);
                 }
             };
         };
@@ -123,7 +123,7 @@
     }
 
     function isA(Type) {
-        return constraint(R.is(Type), 'is not of Type' + Type);
+        return constraint(R.is(Type), 'is not a ' + Type.name ? Type.name : ' member of the given type');
     }
 
     function isIn(elems) {
