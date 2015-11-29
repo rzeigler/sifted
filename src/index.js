@@ -13,7 +13,10 @@
 
     module.exports = {
         run: run,
-        runCont: runCont
+        runCont: runCont,
+        constraint: require('./constraint'),
+        coercion: require('./coercion'),
+        types: require('./types')
     };
 }(
     require('ramda'),
