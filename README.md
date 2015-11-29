@@ -1,4 +1,6 @@
 # Sifted
+[![Build Status](https://travis-ci.org/arzig/sifted.svg?branch=master)](https://travis-ci.org/arzig/sifted)
+
 Sift out your valid inputs... functionally!
 Sifted performs schema validation of hierarchies of objects, arrays, and values in additional to constraint checking and optional coercion using only function composition.
 
