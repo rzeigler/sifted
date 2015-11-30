@@ -1,4 +1,4 @@
-(function (R, T) {
+(function (R, C, Coerce, T) {
     'use strict';
     var run = R.curry(function (check, input) {
         return check(T.Context.Root)(input);
@@ -14,11 +14,13 @@
     module.exports = {
         run: run,
         runCont: runCont,
-        constraint: require('./constraint'),
-        coercion: require('./coercion'),
-        types: require('./types')
+        constraint: C,
+        coercion: Coerce,
+        types: T
     };
 }(
     require('ramda'),
+    require('./constraint'),
+    require('./coercion'),
     require('./types')
 ));
