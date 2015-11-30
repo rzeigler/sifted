@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/arzig/sifted.svg?branch=master)](https://travis-ci.org/arzig/sifted)
 
 Sift out your valid inputs... functionally!
-Sifted performs schema validation of hierarchies of objects, arrays, and values in additional to constraint checking and optional coercion using only function composition.
+Sifted allows the purely compositional construction of a schema by which to verify arbitrarily shaped javascript object hierarchies with optional coercion.
 
 ## Basic Usage
 
