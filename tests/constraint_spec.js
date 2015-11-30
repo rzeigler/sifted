@@ -197,7 +197,7 @@
                 a: [5, 6],
                 b: 'hi',
                 c: [{q: 'world'}]
-            })).to.shallowDeepEqual({
+            }).s).to.shallowDeepEqual({
                 a: [5, 6],
                 b: 'hi',
                 c: [{q: 'world'}]
