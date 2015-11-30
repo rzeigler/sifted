@@ -1,6 +1,6 @@
 {
   "name": "sifted",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Sift out your valid inputs... functionally!",
   "main": "src/index.js",
   "repository": "git@github.com:arzig/sifted.git",
@@ -13,7 +13,7 @@
   "keywords": [
     "functional",
     "schema",
-    "validation"  
+    "validation"
   ],
   "dependencies": {
     "daggy": "0.0.1",
