@@ -2,7 +2,7 @@
     'use strict';
     gulp.task('test', function () {
         return gulp.src('./tests/*.js', {read: false})
-            .pipe(mocha({reporter: 'landing'}))
+            .pipe(mocha({reporter: 'spec'}))
             .on('error', gutil.log);
     });
 

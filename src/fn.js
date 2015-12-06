@@ -21,9 +21,19 @@
         .ap(right);
     }
 
+    function unimplemented() {
+        throw new Error('Not implemented');
+    }
+
+    function noop () {
+        return this;
+    }
+
     module.exports = {
         flowRight: flowRight,
-        flowLeft: flowLeft
+        flowLeft: flowLeft,
+        unimplemented: unimplemented,
+        noop: noop
     };
 }(
     require('ramda')
