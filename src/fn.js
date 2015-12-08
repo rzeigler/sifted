@@ -29,11 +29,18 @@
         return this;
     }
 
+    var asField = R.curry(function (field, value) {
+        var o = {};
+        o[field] = value;
+        return o;
+    });
+
     module.exports = {
         flowRight: flowRight,
         flowLeft: flowLeft,
         unimplemented: unimplemented,
-        noop: noop
+        noop: noop,
+        asField: asField
     };
 }(
     require('ramda')

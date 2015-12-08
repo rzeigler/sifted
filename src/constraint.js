@@ -1,185 +1,87 @@
-(function (Validation, combinators, sorcery, R, fn, T) {
-    // Apply a constraint to an input
-    function constraint(pred, message) {
-        return function (context) {
-            return function (input) {
-                if (pred(input)) {
-                    return Validation.Success(input);
-                } else {
-                    return Validation.Failure([T.Reason(context, message)]);
-                }
-            };
-        };
-    }
+'use strict';
 
-    /**
-     * A constraint that always succeeds. Note that this is still of the types
-     * Context -> Input -> Validation
-     */
-    function valid() {
-        return Validation.Success;
-    }
+var R = require('ramda'),
+    Validation = require('data.validation'),
+    T = require('./types'),
+    Processor = T.Processor,
+    Path = T.Path,
+    Reason = T.Reason;
 
-    /**
-     * Given 2 constraint functions. Create a shortcircuiting constraint that
-     * only tests the second if the first succeeds. This is useful for encoding
-     * type requirements where subsequent constraints are meaningless, i.e.
-     * numerical bounds checking shouldn't be run against a string */
-    function and(first, second) {
-        return function (context) {
-            var contextFirst = first(context),
-                contextSecond = second(context);
-            return function (input) {
-                var firstResult = contextFirst(input);
-                return firstResult.fold(Validation.Failure, contextSecond);
-            };
-        };
-    }
+// Success on input that exists
+// exists : Processor[Validation[Reason, a]]
+var exists = new Processor(function (context) {
+    return context.value.map(Validation.Success)
+        .getOrElse(Validation.Failure([new Reason(context, 'value is not defined')]));
+});
 
-    /**
-    * Given many constraint functions as produced by constraint, return a
-    * single constraint function that is the union of all of them.
-    */
-    function all(fns) {
-        return function (context) {
-            if (fns.length === 0) {
-                return Validation.Success; // Empty constraints means just return success
-            } else {
-                var contextFns = fns.map(combinators.thrush(context));
-                return function (input) {
-                    return contextFns.map(combinators.thrush(input))
-                    .reduce(fn.flowRight);
-                };
-            }
-        };
-    }
+// Success on any input.
+// anything : Processor[Validation[Reason, Maybe[a]]]
+var anything = new Processor(function (context) {
+    return Validation.Success(context.value);
+});
 
-    var keyed = R.curry(function (key, val) {
-        var obj = {};
-        obj[key] = val;
-        return obj;
+// Create a Processor from a predicate.
+// check : (a -> Bool) -> String -> Processor[Validation[Reason, a]]
+var check = R.curry(function constraint(predicate, message) {
+    return new Processor(function (context) {
+        var test = R.cond([
+            [predicate, Validation.Success],
+            [R.T, R.always(Validation.Failure([new Reason(context, message)]))]
+        ]);
+        return context.value.map(test)
+            .getOrElse(Validation.Failure([new Reason(context, 'value is not defined')]));
     });
+});
 
-    // Construct an object field operator
-    //
-    function field(key, constraint, options) {
-        var opts = options ? options : {};
-        return function (context) {
-            var subContext = T.Context.Derived(context, T.Key.Field(key));
-            var contextConstraint = constraint(subContext);
-            return function (input) {
-                if (key in input) {
-                    return contextConstraint(input[key]).map(keyed(key));
-                } else if (opts.defaultVal){
-                    return Validation.Success(keyed(key, opts.defaultVal));
-                } else if (opts.optional) {
-                    return Validation.Success({});
-                } else {
-                    return Validation.Failure([T.Reason(subContext, 'is required but missing')]);
-                }
-            };
-        };
-    }
+// Runs all processors, taking the value of the last
+// all : [Processor[Validation[Reason, a]]] -> Processor[Validation[Reason, a]]
+var last = function (processors) {
+    return R.commute(Processor.of, processors).map(R.tail);
+};
 
-    // Merge Validation[E, Object]
-    function merger(left, right) {
-        return Validation.of(R.merge).ap(left).ap(right);
-    }
+// Runs a field processor
+// property: Processor[a] -> Processor[[k v]]
+// The result of this processor, if successful will be a an array of length 2
+var property = R.curry(function (constraint, name) {
+    var path = Path.Property(name);
+    // Test existence first, then check constraint
+    return exists.asks(path).chain(R.always(constraint.asks(path)))
+        // Construct an object with a single kv pair from the
+        .map(R.compose(R.prepend(name), R.of));
+});
 
-    function object(fields) {
-        return function (context) {
-            var contextFields = R.ap(fields, [context]);
-            return function (input) {
-                // Results is an array of validations
-                var results = R.ap(contextFields, [input]);
-                return R.reduce(merger, Validation.Success({}), results);
-            };
-        };
-    }
+var optionalProperty = R.curry(function (constraint, opts, name) {
+    return new Processor(function (context) {
+        var path = Path.Property(name),
+            subcontext = context.derive(path);
+        if (subcontext.value.isJust) {
+            return property(constraint, name).run(context);
+        } else {
+            return opts.default ? Validation.Success([name, opts.default]) : Validation.Success([]);
+        }
+    });
+});
 
-    // Convert a F[A] -> F[List[A]]
-    function mapInto(functor) {
-        return functor.map(R.flip(R.repeat)(1));
-    }
+var assoc = function (fields) {
+    return R.commute(Processor.of, fields)
+        .map(R.fromPairs);
+};
 
-    function array(lengthConstraint, itemConstraint) {
-        return function (context) {
-            var contextLen = lengthConstraint(T.Context.Derived(context, T.Key.Field('length')));
-            return function (input) {
-                // TODO: This can probably be implemented in terms of isA & and
-                if (!Array.isArray(input)) {
-                    return Validation.Failure([T.Reason(context, 'is not an array')]);
-                }
-                var len = contextLen(input.length),
-                    indexes = R.range(0, input.length),
-                    contexts = R.map(R.curryN(2, T.Context.Derived)(context), indexes),
-                    contextItemConstraints = R.ap([itemConstraint], contexts),
-                    // Apply each contextConstraint to its corresponding input item
-                    // mapInt converts Validation[E, A] -> Validation[E, [A]] for easy reducing via append/concat
-                    results = R.map(mapInto, R.zipWith(R.call, contextItemConstraints, input));
-                return fn.flowRight(len, R.reduce(sorcery.append, Validation.Success([]), results));
-            };
-        };
-    }
+var array = R.curry(function (onLength, onItem) {
+    var len = Path.Property('length'),
+        unfoldf = l => n => n < l ? [onItem.asks(Path.Index(n)), n + 1] : false;
+    return exists.asks(len).chain(R.always(onLength.asks(len)))
+        // Given a length, produce a set of constraints, one per index
+        .chain(l => R.commute(Processor.of, R.unfold(unfoldf(l), 0)));
+});
 
-    function isA(Type) {
-        return constraint(R.is(Type), 'is not a ' + Type.name ? Type.name : ' member of the given type');
-    }
-
-    function isIn(elems) {
-        return constraint(R.flip(R.contains)(elems), 'is not one of ' + elems);
-    }
-
-    function equals(x) {
-        return constraint(R.equals(x), 'is not ' + x);
-    }
-
-    function isGt(x) {
-        // x should be less than the input
-        return constraint(R.lt(x), 'is not > ' + x);
-    }
-
-    function isGte(x) {
-        return constraint(R.lte(x), 'is not >= ' + x);
-    }
-
-    function isLt(x) {
-        return constraint(R.gt(x), 'is not < ' + x);
-    }
-
-    function isLte(x) {
-        return constraint(R.gte(x), 'is not <= ' + x);
-    }
-
-    var isNumber = isA(Number),
-        isString = isA(String),
-        isDate = isA(Date);
-
-    module.exports = {
-        constraint: constraint,
-        and: and,
-        valid: valid,
-        all: all,
-        field: field,
-        object: object,
-        array: array,
-        equals: equals,
-        isA: isA,
-        isNumber: isNumber,
-        isString: isString,
-        isDate: isDate,
-        isIn: isIn,
-        isGt: isGt,
-        isGte: isGte,
-        isLt: isLt,
-        isLte: isLte
-    };
-
-}(
-    require('fantasy-validations'),
-    require('fantasy-combinators'),
-    require('fantasy-sorcery'),
-    require('ramda'),
-    require('./fn'),
-    require('./types')
-));
+module.exports = {
+    exists: exists,
+    anything: anything,
+    check: check,
+    last: last,
+    property: property,
+    optionalProperty: optionalProperty,
+    assoc: assoc,
+    array: array
+};

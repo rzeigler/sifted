@@ -24,6 +24,15 @@ describe('types', function () {
                 expect(list).to.have.length(3);
                 expect(list.map(s => s.toString()).join('')).to.equal('["a"]["b"][1]');
             });
+            it('should run to arbitrary depths', function () {
+                var deep = {a: [{b: {c: [3, 4]}}]},
+                    context = T.Context.Root(deep),
+                    derived = context.derive(T.Path.Property('a')).derive(T.Path.Index(0)).derive(T.Path.Property('b')).derive(T.Path.Property('c')).derive(T.Path.Index(1));
+                expect(derived.value)
+                    .to.shallowDeepEqual(Maybe.Just(4));
+                expect(derived.derive(T.Path.Index(0)).value)
+                    .to.shallowDeepEqual(Maybe.Nothing());
+            });
         });
     });
     describe('Processor', function () {

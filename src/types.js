@@ -98,7 +98,9 @@ function Processor(run) {
 }
 Processor.prototype.map = function (fn) {
     var self = this;
-    return new Processor(context => self.run(context).map(fn));
+    return new Processor(function (context) {
+        return self.run(context).map(fn);
+    });
 };
 Processor.prototype.of = Processor.of = function (x) {
     return new Processor(function () { return Validation.Success(x); });
