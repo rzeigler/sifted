@@ -75,6 +75,36 @@ var array = R.curry(function (onLength, onItem) {
         .chain(l => R.commute(Processor.of, R.unfold(unfoldf(l), 0)));
 });
 
+var isEq = function (x) {
+    return check(R.equals(x), 'is not equal to ' + x);
+};
+
+var isGt = function (x) {
+    return check(R.lt(x), 'is not greather than ' + x);
+};
+
+var isGte = function (x) {
+    return check(R.lte(x), 'is not greater than or equal to ' + x);
+};
+
+var isLt = function (x) {
+    return check(R.gt(x), 'is not less than ' + x);
+};
+
+var isLte = function (x) {
+    return check(R.gte(x), 'is not greater than or equal to ' + x);
+};
+
+var isA = function (t) {
+    return check(R.is(t), 'is not an instance of ' + t);
+};
+
+var isNumber = isA(Number);
+
+var isString = isA(String);
+
+var isArray = isA(Array);
+
 module.exports = {
     exists: exists,
     anything: anything,
@@ -83,5 +113,14 @@ module.exports = {
     property: property,
     optionalProperty: optionalProperty,
     assoc: assoc,
-    array: array
+    array: array,
+    isEq: isEq,
+    isGt: isGt,
+    isGte: isGte,
+    isLt: isLt,
+    isLte: isLte,
+    isA: isA,
+    isNumber: isNumber,
+    isString: isString,
+    isArray: isArray
 };

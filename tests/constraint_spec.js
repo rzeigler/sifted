@@ -136,6 +136,29 @@ describe('constraint', function () {
         });
     });
 
+    describe('#isEq', function () {
+        var isEq1 = constraint.isEq(1);
+        it('should succeed on valid input', function () {
+            expect(isEq1.run(Context.Root(1)))
+                .to.shallowDeepEqual(Validation.Success(1));
+        });
+        it('should fail on invalid input', function () {
+            expect(isEq1.run(Context.Root(2)).isFailure)
+                .to.equal(true);
+        });
+    });
+
+    describe('#isA', function () {
+        it('should succeed on correctly typed input', function () {
+            expect(constraint.isString.run(Context.Root('hi')))
+                .to.shallowDeepEqual(Validation.Success('hi'));
+        });
+        it('should fail on invalid input', function () {
+            expect(constraint.isString.run(Context.Root(1)).isFailure)
+                .to.equal(true);
+        });
+    });
+
     it('should compose hierarchically', function () {
         var evenProperty = constraint.property(constraint.check(x => x % 2 === 0, 'is not even')),
             oddProperty = constraint.property(constraint.check(x => x % 2 === 1, 'is not odd')),
