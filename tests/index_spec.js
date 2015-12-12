@@ -2,7 +2,7 @@
 
 var chai = require('chai'),
     expect = chai.expect,
-    sifted = require('../src');
+    sifted = require('../');
 
 describe('index', function () {
     describe('#run', function () {

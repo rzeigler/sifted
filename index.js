@@ -1,9 +1,9 @@
 'use strict';
 
 var R = require('ramda'),
-    Constraint = require('./constraint'),
-    Coercion = require('./coercion'),
-    Types = require('./types');
+    Constraint = require('./src/constraint'),
+    Coercion = require('./src/coercion'),
+    Types = require('./src/types');
 
 var run = R.curry(function (processor, value) {
     return processor.run(Types.Context.Root(value));
