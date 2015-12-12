@@ -1,119 +1,66 @@
-# Constraint API
+# Constraint
 
-Constraints are just curried functions with a type of `Context -> Input -> Validation[Array[Reason], Output]`.
-In particular, this means that creating your own constraints is super easy because functions compose really well.
-That said, there are some combinators to make creating your own constraints super easy. When reading this document assume that `Constraint = Context -> Input -> Validation[Array[Reason], Output]`
-Any instance of `Constraint` is suitable for passing to `sifted.run` however, some are not particularly useful on their own such as `valid` or `field`.
+The Constraint module provides combinators returning `Processor`s with the described behavior.
+Consult [types](./types.md) for a description of the types involved.
 
-Finally, a note on arity.
-Constraint is a manually curried function.
-Most other functions are not curried, despite what the arity notation may indicate.
+## `exists: Processor<a>`
+A `Processor` that return the value in its context if it is defined, otherwise it fails.
 
-## constraint
-`constraint: (Input -> Bool) -> String -> Constraint`
+## `anything: Processor<Maybe<a>>`
+A `Processor` that always succeeds on its input.
 
-Create a constraint from a predicate function and a message.
-The produced constraint will succeed with the input when the predicate returns true.
-If the predicate returns false, the constraint will fail with a Reason containing message along with the input context.
+## `check: (a -> Boolean) -> String -> Processor<a>`
+Create a `Processor` that succeeds with its input value if it is both defined and the predicate provided as the first argument returns true.
+If the value is defined but the does not pass the predicate the failure message will be used in the `Reason`.
 
-## valid
-`valid: Constraint`
+## `last: [Processor<a>] -> Processor<a>`
+Create a `Processor` that runs all of the input `Processor`s aggregating errors.
+If all processors succeed, the output processor succeeds with the value of the last processor.
+This is useful for combining many `check` results into a single `Processor`
 
-Create a constraint that succeeds on any input.
+## `property: Processor<a> -> String -> Processor<[String a]>`
+Create a processor for a property.
+If the input constraint is successful and the property is defined, the `Processor` will result in an array of length 2 containing the input key as the first value and the value at that property as the second.
+This is useful in conjunction with `[assoc](#assoc)`.
+The property name is the second parameter to allow the same constraint to be easily used among multiple properties with currying.
 
-## isA
-`isA: Type -> Constraint`
+## `optionalProperty: Processor<a> -> Options -> String -> Processor<[String a]>`
+Like property, but if the value in the given field is undefined, returns an empty array instead.
+Useful in conjunction with `[assoc](#assoc)` to define fields that need not necessarily be present.
+If options.default is defined, it will be used for the result instead of an empty array.
 
-Create a constraint that succeeds with its input when `input instanceof Type`
+## `assoc: [Processor<[String a]] -> Processor<Object>`
+Combine an array of property processors into a processor that returns an object. Example:
 
-## and
-`and: Constraint -> Constraint -> Constraint`
-
-Create a constraint that is a shortcircuiting and on its 2 input constraints. This is most useful for ensuring that an input is of given type and then running typed validations on the value.
-For instance, one would not want to run numeric checks on an input that is a string.
-
-Example:
-
-    and(isA(Number), gt5);
-
-## all
-`all: [Constraint] -> Constraint`
-
-Create a constraint that is the union of all its component constraints. Errors across the input constraints will be aggregated.
-When the combined constraint succeeds it will succeed with the value of the last constraint in the input array.
-
-## field
-`field: String -> Constraint -> Options -> Constraint`
-
-Create a constraint that validates a single field of an input object against the provided constraint.
- When this succeeds, it succeeds with either an empty object `{}` or an object with a single field field matching the input string.
-This is not terribly useful on its own but operates in conjuction with [object](#object) that aggregates the results.
-
-
-## object
-`object: [Constraint] -> Constraint`
-
-Create an object constraint.
-There is an assumption that the input Constraints all succeed with objects themselves such as being produced by [field](#field).
-If this is not the case, the output of the returned constraint is undefined.
-You may further nest object constraints within an object's field to achieve hierarchies.
-
-Example:
-
-    C.object([
-        C.field('a', C.isNumber),
-        C.field('b', C.isString)
+    association = constraint.assoc([
+        property(isEven, 'a'),
+        property(isOdd, 'b'),
+        property(isEven, 'c')
     ]);
 
-## array
-`array: Constraint -> Constraint -> Constraint`
+## `array: Processor<Number> -> Processor<a> -> Processor<[a]>`
+Create an array `Processor` from a `Processory` verifying the length of an Array and the subsequently verifying each element with the `Processor` given by the second argument. Note that existence and isNumberness of length is verified by default. If you don't care about the length you may use `anyLenArray`. Example:
 
-Creates an array constraint.
-The first constraint argument is a constraint on the length of the array.
-The second constraint argument is a constraint on each element of the array.
+    var isEven = constraint.check(x => x % 2 === 0, 'is not even'),
+        evenArray = constraint.array(constraint.isNumber, isEven);
 
-Example:
+## `anyLenArray: Processor<a> -> Processor<[a]>`
+Create an array processor that accepts any object with a length property that is also a number.
 
-    var numberArray = C.array(C.valid, C.isNumber),
-        geoJsonPointLocation = C.array(C.constraint(R.eq(2), 'must have length 2'),
-                                       C.isNumber);
+## `isA: T -> Processor<a>`
+Create a processor that succeeds if the input value is defined and an instance of `T`.
 
-## isNumber
-`isNumber: Constraint`
+## Other combinators
+There are further combinators that are defined and generally do what you would expect. They include
 
-A constraint that succeeds when its input is a number.
+* isEq
+* isGt
+* isGte
+* isLt
+* isLte
+* isNumber
+* isString
+* isArray
 
-## isString
-`isString: Constraint`
-
-A constraint that succeeds when its input is a string.
-
-## isDate
-`isDate: Constraint`
-
-A constraint that succeeds when its input is a Date.
-
-## isIn
-`isIn: [x] -> Constraint`
-
-Create a constraint that succeeds when its input is in a given set.
-
-## isGt
-`isGt: Number -> Constraint`
-
-Create a constraint the succeeds when its input is greater than the argument.
-
-## isGte
-`isGte: Number -> Constraint`
-
-Create a constraint the succeeds when its input is greater than or equal to the argument.
-
-## isLt
-`isLt: Number -> Constraint`
-
-Create a constraint that succeeds when its input is less than the argument
-
-## isLte
-`isLte: Number -> Constraint`
-
-Create a constraint that succeeds when its input is less than or equal to the argument.
+Note that for less than, greater than variants, the input value from the context is tested against the input in the first position.
+Hopefully this does what you expect, but for completeness, assuming the value in `Context` is `y`, `isGt(x)` will create a Processor that tests, informally, whether `x < y` which is equivalent to the test `y > x` which you might expect from the method name.

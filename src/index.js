@@ -1,26 +1,23 @@
-(function (R, C, Coerce, T) {
-    'use strict';
-    var run = R.curry(function (check, input) {
-        return check(T.Context.Root)(input);
-    });
-    var runCont = R.curry(function (check, input, cont) {
-        run(check, input).fold(function (err) {
-            cont(err, null);
-        }, function (val) {
-            cont(null, val);
-        });
-    });
+'use strict';
 
-    module.exports = {
-        run: run,
-        runCont: runCont,
-        constraint: C,
-        coercion: Coerce,
-        types: T
-    };
-}(
-    require('ramda'),
-    require('./constraint'),
-    require('./coercion'),
-    require('./types')
-));
+var R = require('ramda'),
+    Constraint = require('./constraint'),
+    Coercion = require('./coercion'),
+    Types = require('./types');
+
+var run = R.curry(function (processor, value) {
+    return processor.run(Types.Context.Root(value));
+});
+
+var runCont = R.curry(function (processor, value, cont) {
+    run(processor, value).fold(err => cont(err, null),
+                               val => cont(null, val));
+});
+
+module.exports = {
+    run: run,
+    runCont: runCont,
+    Constraint: Constraint,
+    Coercion: Coercion,
+    Types: Types
+};

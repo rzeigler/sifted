@@ -1,19 +1,23 @@
-# Coercion API
+# Coercion
 Sifted supports coercion of inputs via type specifications.
-If, for instance, you expect to receive a Date in ISO format but want to operate on a Date instance in memory, you may construct a `Coercion`.
-Note that `Coercion` is defined in types.
-A `Coercion` defines the conversion from an input type to an output type that may optionally fail (using validation).
-Alternatively, if I remember my category theory correctly, Coercion defines the Kleisli Arrow `T1 -> Validation[[E], T2]`
+If, for instance, you expect to receive a Date in an ISO formated string but want to operate on a Date instance in memory, you may use the provided combinators to create a `Processor` that performs this coercion for you.
 
-Once you have a `Coercion` you may construct a constraint via the `coercion` function.
+# combinators
 
-## coercion
-`coercion: Type -> [Coercion] -> Constraint -> Constraint`
+## `coercion: A -> String -> (a -> Maybe<b>)`
+Given an expected input type `A`, a failure message, and a coercion function, create a `Processor` that will attempt to the coercion if the value in its `Context` is of type `A`.
+If the input type does not match, an appropriate `Failure` will be constructed and if the coercion function returns `Nothing` a `Failure` will be constructed with the input failure message as its reason.
 
-Create a constraint from a list of coercions.
-The returned `Constraint` succeeds if the input is either already of `Type` or can be coerced to that type via one of the coercion and the provided constraint succeeds.
-If, for some reason, multiple coercions are defined for the input type, the first is chosen and the rest are ignored.
+## `id: A -> Processor<a>`
+A no-op coercion function.
+This coercer will succeed if the input is already of type A.
+This is primarily used as a seed for `coercer`
 
-Example:
+## `integerCoercion: Number -> Processor<Number>`
+Create an integer coercer using parseInt with the given base.
 
-    Coerce.coercion(Number, [Coerce.parseInteger(10)], gt5)
+## `floatCoercion: Processor<Number>`
+A coercer that uses parseFloat internally.
+
+## `coercer: A -> [Processor<a>] -> Processor<a>`
+Given an input type and an array of coercion Processors, returns a coercing `Processor` that succeeds if the input is already of type `A` or can be coerced to an `A` by one of provided coercers.

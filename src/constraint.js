@@ -16,9 +16,7 @@ var exists = new Processor(function (context) {
 
 // Success on any input.
 // anything : Processor[Validation[Reason, Maybe[a]]]
-var anything = new Processor(function (context) {
-    return Validation.Success(context.value);
-});
+var anything = Processor.identity;
 
 // Create a Processor from a predicate.
 // check : (a -> Bool) -> String -> Processor[Validation[Reason, a]]
@@ -67,14 +65,6 @@ var assoc = function (fields) {
         .map(R.fromPairs);
 };
 
-var array = R.curry(function (onLength, onItem) {
-    var len = Path.Property('length'),
-        unfoldf = l => n => n < l ? [onItem.asks(Path.Index(n)), n + 1] : false;
-    return exists.asks(len).chain(R.always(onLength.asks(len)))
-        // Given a length, produce a set of constraints, one per index
-        .chain(l => R.commute(Processor.of, R.unfold(unfoldf(l), 0)));
-});
-
 var isEq = function (x) {
     return check(R.equals(x), 'is not equal to ' + x);
 };
@@ -105,6 +95,18 @@ var isString = isA(String);
 
 var isArray = isA(Array);
 
+
+var array = R.curry(function (onLength, onItem) {
+    var len = Path.Property('length'),
+        unfoldf = l => n => n < l ? [onItem.asks(Path.Index(n)), n + 1] : false;
+    // Always verify that length exists and is a number
+    return exists.asks(len).chain(R.always(isNumber.asks(len))).chain(R.always(onLength.asks(len)))
+        // Given a length, produce a set of constraints, one per index
+        .chain(l => R.commute(Processor.of, R.unfold(unfoldf(l), 0)));
+});
+
+var anyLenArray = array(isNumber);
+
 module.exports = {
     exists: exists,
     anything: anything,
@@ -114,6 +116,7 @@ module.exports = {
     optionalProperty: optionalProperty,
     assoc: assoc,
     array: array,
+    anyLenArray: anyLenArray,
     isEq: isEq,
     isGt: isGt,
     isGte: isGte,

@@ -1,26 +1,90 @@
 # Types
+The types module defines all of the types used in sifted.
+Many modules from the [_folktale_](http://folktalejs.org) libraries are including data.maybe and data.validation.
+For documentation regarding the `Validation` and `Maybe` types consult the [_folktale_ documentation](http://docs.folktalejs.org/en/latest/).
 
-## Key
+# `Path`
+Sum type representing a key lookup in a hierarchy.
+Values represent lookup by either index or key.
 
-A tagged sum representing a lookup step in the context zipper object.
-This is either a `Field` indicating an object property lookup or an `Index` indicating an array index lookup.
+## `Index`
+Path value representing lookup of an index in an array
 
-## Context
-`Context = Root | Derived Context Key`
+## `Property`
+Path value representing lookup of a property in an object.
 
-A specification for a location within a hierarchy of objects.
-A context uniquely identifies a specific location (which may not exist) within an object.
-`Context` provides a toString() method to print its address.
+## Members
 
-## Reason
-`Reason Context String`
+* `isProperty : Bool` is a path a Property
+* `isIndex : Bool` is a path an Index
+* `cata : (Map<String, a -> b>) -> b` perform dispatch based on the value type. Example:
 
-The reason for a validation failure.
-Each reason contains a `context` field indicating the location of a failure and a `message` field indicating the reason why validation failed.
 
-## Coercion
-`Coercion Type (Input -> Validation[[E], Output])`
+    var p = Path.Index(1);
+    p.cata({
+        Index: n => console.log('index: ' n),
+        Property: k => console.log('property: ' + k)
+    });
+    // prints index: 1
 
-The specification of a coercion.
-Coercions are specified by a `type` and a function (the `fn` field) that performs the conversion.
-Coercions may fail using the validation type.
+# `Context`
+A zipper into an object hierarchy.
+Maintains the focused value as a `Maybe` where `Nothing` indicates that there is no value at the given path.
+
+## `Root value`
+Value indicating the top level object in a hierarchy.
+This context focuses the outermost object.
+value is the focused value
+
+## `Derived enclosing path value`
+Value indicating a derived context.
+Enclosing is the parent context, path is the Path object to derive this from the parent, and value is the focused value.
+
+## Members
+* `isDerived: Boolean` is this a derived context
+* `isRoot: Boolean` is this a root context
+* `cata: (Map<String, a -> b>) -> b` dispatch based on type
+* `pathList: () -> [Path]` generate the list of Paths used to arrive at the focused Value
+* `derive: Path -> Context` create a derived context based on Path
+
+# `Reason context message`
+The reason for a processor failure.
+This encapsulates the context at which the processor failed as well as a message string indicating what went wrong.
+All `Processor`s return an `Array` of `Reason`s in the failure case.
+
+# `Processor a`
+An instance of an value processor.
+`Processor`'s encapsulate a function of type `Context -> Validation<[Reason], a>`.
+This makes them a restricted form of a Reader.
+As such, they implement the fantasy-land specification for `Functor`, `Applicative`, and `Monad`.
+To execute a `Processor` directly against a context, call `p.run(ctx)`.
+In most cases this is unnecessary as index defines a `run(processor, value)` that handles wrapping the value in a root context
+
+## Monad v Applicative
+A note on `Processor` usage.
+`Processor` is defined as a `Monad`, however, `Validation` is only an `Applicative`.
+As such, it is not possible to aggregate errors when the `Processor` is used
+as a monad.
+In many cases, this makes sense. For instance, one should verify that the value in a context is defined before attempting to check constraints against it.
+However, when using the `Monad` interface, consider whether or not your goals can be achieved using `Applicative` instead as your error reporting may not be as complete as it otherwise could be
+
+## Members
+Unless otherwise noted, assume this as an implicit argument of `Processor<a>` which translates to a `Context -> Validation<[Reason], a>`
+*    `run: Context -> Validation<[Reason], a>` the run function
+*    `map: a -> b -> Processor<b>`
+*    `[static|member] of: a -> Processor a` create a constant `Processor a`
+*    `ap: Processor<a> -> Processor<b> where this is a Processor<a -> b>`
+*    `chain: a -> Processor<b> -> Processor<b>`
+*    `concat: Processor<a> -> (a -> a -> a) -> Processor<a>`
+
+    Semigroup concat/append the result of this processor with another processor. This function is _not_ curried because the provided function is optional. It is only provided in the case where executing the concat method (i.e. using the types Semigroup implementation per fantasy-land) on the inner value doesn't make sense. Say, in the case where you want to use append on `Number`s of `Object`s.
+* `orElse: Processor<a> -> Processor<a>` Alternative#choice create a `Processor` that will execute this, and, if it fails, will attempt to recover by running processor other.
+* `andThen: Processor<a> -> Processor<a>` Applicatively sequence this and the provided processor. This results in the value of the second processor if both are successful. This is equivalent to Haskell's `*>`.
+* `onlyIf: Processor<a> -> Processor<a>` Applicatively sequence this and the provided processor. This results in the value of this if both are successful. This is equivalent to Haskell's `<*`
+* `errorMessage: String -> Processor<a>` create a `Processor` that has the exact same semantics as this except it will always fail with the provided error message instead of any error messages that may have been accumulated.
+This is useful to provide meaningful error messages in the case of coercion where many coercions may fail and it makes sense to return a single summary error.
+* `asks: Path -> Processor<a>` create a `Processor` that runs this on its input context derived by Path instead of the input context itself.
+Used for navigating the object hierarchy.
+This is similar to `Reader#asks` but restricted to Path rather than a general function.
+There is also a static variant that accepts the processor as the first argument.
+* `[static] identity: Processor<Maybe<a>>` a processor that always succeeds on the value in its input context.
