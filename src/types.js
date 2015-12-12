@@ -131,7 +131,8 @@ Processor.prototype.concat = function (other, concat) {
 // Create a derived processor that returns a successful result from this, or a
 // successful result from the other. The error message will be that of the second
 // in the case of both being a failure
-Processor.prototype.orElse = function (other) {
+// Assign to or to work with Ramda
+Processor.prototype.orElse = Processor.prototype.or = function (other) {
     var self = this;
     return new Processor(function (context) {
         return self.run(context).orElse(function () { return other.run(context); });
@@ -156,7 +157,7 @@ Processor.prototype.errorMessage = function (msg) {
     var self = this;
     return new Processor(function (context) {
         return self.run(context)
-            .fold(R.always(Reason(context, msg)), Validation.Success);
+            .fold(R.always(Validation.Failure([new Reason(context, msg)])), Validation.Success);
     });
 };
 // Create a processor
