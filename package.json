@@ -3,7 +3,6 @@
   "version": "0.2.0",
   "description": "Sift out your valid inputs... functionally!",
   "repository": "git@github.com:arzig/sifted.git",
-  "main": "index.js",
   "homepage": "https://github.com/arzig/sifted",
   "scripts": {
     "test": "gulp test"
