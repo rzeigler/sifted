@@ -102,7 +102,16 @@ describe('constraint', function () {
                 .to.shallowDeepEqual(true);
         });
     });
-
+    describe('#rejectProperty', function () {
+        it('should succeed with an empty array when the property is absent', function () {
+            expect(constraint.rejectProperty('a').run(Context.Root({b: 1})))
+                .to.shallowDeepEqual(Validation.Success([]));
+        });
+        it('should fail when the property is present', function () {
+            expect(constraint.rejectProperty('a').run(Context.Root({a: 1})).isFailure)
+                .to.equal(true);
+        });
+    });
     describe('#assoc', function () {
         var evenProperty = constraint.property(constraint.check(x => x % 2 === 0, 'is not even')),
             oddProperty = constraint.property(constraint.check(x => x % 2 === 1, 'is not odd')),
@@ -133,6 +142,10 @@ describe('constraint', function () {
             var result = evenArray.run(Context.Root([2, 5, 8, 9]));
             expect(result.isFailure).to.equal(true);
             expect(result.value.length).to.equal(2);
+        });
+        it('should fail when input is not an array', function () {
+            var result = evenArray.run(Context.Root({}));
+            expect(result.isFailure).to.equal(true);
         });
     });
 

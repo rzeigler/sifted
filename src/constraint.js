@@ -38,7 +38,7 @@ var last = function (processors) {
 };
 
 // Runs a field processor
-// property: Processor[a] -> Processor[[k v]]
+// property: Processor[a] -> String -> Processor[[k v]]
 // The result of this processor, if successful will be a an array of length 2
 var property = R.curry(function (constraint, name) {
     var path = Path.Property(name);
@@ -57,6 +57,17 @@ var optionalProperty = R.curry(function (constraint, opts, name) {
         } else {
             return opts.default ? Validation.Success([name, opts.default]) : Validation.Success([]);
         }
+    });
+});
+
+// Reject if a property is present
+var rejectProperty = R.curry(function (name) {
+    return new Processor(function (context) {
+        var path = Path.Property(name),
+            subcontext = context.derive(path);
+        return subcontext.value
+            .map(R.always(Validation.Failure([new Reason(context, 'property ' + name + ' is disallowed')])))
+            .getOrElse(Validation.Success([]));
     });
 });
 
@@ -95,12 +106,14 @@ var isString = isA(String);
 
 var isArray = isA(Array);
 
-
 var array = R.curry(function (onLength, onItem) {
     var len = Path.Property('length'),
         unfoldf = l => n => n < l ? [onItem.asks(Path.Index(n)), n + 1] : false;
     // Always verify that length exists and is a number
-    return exists.asks(len).chain(R.always(isNumber.asks(len))).chain(R.always(onLength.asks(len)))
+    return isArray.chain(R.always(isNumber.asks(len)))
+        // Defend against onLength doing something wierd like not returning a number
+        // Otherwise use the number returned by the on length constraint
+        .chain(l => onLength.asks(len).chain(r => R.is(Number, r) ? Processor.of(r) : Processor.of(l)))
         // Given a length, produce a set of constraints, one per index
         .chain(l => R.commute(Processor.of, R.unfold(unfoldf(l), 0)));
 });
@@ -114,6 +127,7 @@ module.exports = {
     last: last,
     property: property,
     optionalProperty: optionalProperty,
+    rejectProperty: rejectProperty,
     assoc: assoc,
     array: array,
     anyLenArray: anyLenArray,

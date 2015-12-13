@@ -1,6 +1,6 @@
 {
   "name": "sifted",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Sift out your valid inputs... functionally!",
   "repository": "git@github.com:arzig/sifted.git",
   "homepage": "https://github.com/arzig/sifted",
