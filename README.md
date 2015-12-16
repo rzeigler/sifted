@@ -10,18 +10,26 @@ Create constraints using combinators and then execute them with run.
 
     var sifted = requre('sifted'),
         C = sifted.Constraint,
+        input = {
+            a: 5,
+            b: ['hello', 'world!'],
+            q: 'extraneous property'
+        },
         schema = C.assoc([
                 C.property(C.isNumber, 'a'),
                 C.property(C.anyLenArray(C.isString), 'b')
             ]),
         result = sifted.run(schema, input);
     result.fold(err => console.error(err), v => console.log(v));
+    // Prints on stdout
+    // { a: 5, b: [ 'hello', 'world!' ] }
 
-At this point, `result` will be a `Validation[Array[Reason], A]` which is an object conforming to the specification you might expect.
-The `A` type will match the ideal structure of your input including none of the superfluous fields.
-Each `Reason` in the output type is a `Context` indicating the location in the input an error occurred and an associated error message.
-There is also a `sifted.runCont(c, input, cb)` that exposes an api similar to Joi where cb should have the signature `Array[Reason], Output -> Null`.
-Note that if validation fails, the callback receives null for output.
+At this point, `result` will be a `Validation<[Reason], a>` indicating success or failure (in this case success).
+The `a` instance will match the ideal structure of your input including none of the superfluous fields.
+For example, the extraneous property q will not be present in the output.
+
+In the event of a validation failure, result will instead contain a result of `Reason`s; each one containing a `Context` indicating the location of the failure and a `String` indicating the reason.
+There is also a `sifted.runCont(c, input, cb)` where `cb` should be an error first callback.
 
 For more see
 * The [Constraint API](doc/constraint.md)

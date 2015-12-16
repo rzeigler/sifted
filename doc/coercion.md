@@ -20,4 +20,4 @@ Create an integer coercer using parseInt with the given base.
 A coercer that uses parseFloat internally.
 
 ### `coercer: A -> [Processor<a>] -> Processor<a>`
-Given an input type and an array of coercion Processors, returns a coercing `Processor` that succeeds if the input is already of type `A` or can be coerced to an `A` by one of provided coercers.
+Given an input type and an array of coercion Processors, returns a coercing `Processor` that succeeds if the input is already of type `a` or can be coerced to an `a` by one of provided coercers.
