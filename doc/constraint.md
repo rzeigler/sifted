@@ -31,6 +31,11 @@ Like property, but if the value in the given field is undefined, returns an empt
 Useful in conjunction with [assoc](#assoc) to define fields that need not necessarily be present.
 If options.default is defined, it will be used for the result instead of an empty array.
 
+### `rejectProperty: String -> Processor<[]>`
+The inverse of property.
+This processor succeeds with an empty array if the given property is not in the input object.
+Otherwise, it fails.
+
 ### `assoc: [Processor<[String a]] -> Processor<Object>`
 Combine an array of property processors into a processor that returns an object. Example:
 
