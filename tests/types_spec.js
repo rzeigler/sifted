@@ -98,4 +98,11 @@ describe('types', function () {
             });
         });
     });
+    describe('Sum', function () {
+        describe('Monoid', function () {
+            it('should implement associative concat', function () {
+                
+            });
+        });
+    });
 });

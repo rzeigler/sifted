@@ -176,9 +176,66 @@ Processor.identity = new Processor(function (context) {
     return Validation.Success(context.value);
 });
 
+var Sum = R.constructN(function Sum(n) {
+    if (n.constructor !== Number) {
+        throw new TypeError('input must be a number');
+    }
+    this.n = n;
+});
+
+Sum.prototype.empty = function () {
+    return Sum(0);
+};
+
+Sum.prototype.concat = function (other) {
+    return Sum(this.n + other.n);
+};
+
+Sum.prototype.unwrap = function () {
+    return this.n;
+};
+
+var Product = R.constructN(function Product(n) {
+    if (n.constructor !== Number) {
+        throw new TypeError('input must be a number');
+    }
+    this.n = n;
+});
+
+Product.prototype.empty = function () {
+    return Product(1);
+};
+
+Product.prototype.concat = function (other) {
+    return Product(this.n * other);
+};
+
+Product.prototype.unwrap = function () {
+    return this.n;
+};
+
+var Dictionary = R.constructN(function Dictionary(o) {
+    this.o = o;
+});
+
+Dictionary.prototype.empty = function () {
+    return Dictionary({});
+};
+
+Dictionary.prototype.concat = function (other) {
+    return Dictionary(R.merge(this.o, other.o));
+};
+
+Dictionary.prototype.unwrap = function () {
+    return this.o;
+};
+
 module.exports = {
     Path: Path,
     Reason: Reason,
     Context: Context,
-    Processor: Processor
+    Processor: Processor,
+    Sum: Sum,
+    Product: Product,
+    Dictionary: Dictionary
 };
